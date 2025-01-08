@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="pastel">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pomodoro</title>
+    <link href="/styles/output.css" rel="stylesheet" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-straight/css/uicons-solid-straight.css"
+    />
+  </head>
+  <body>
+    <div
+      id="main"
+      class="min-h-screen bg-primary flex items-center justify-center"
+    >
+      <div
+        id="container"
+        class="bg-base-100 p-8 w-1/2 flex flex-col items-center rounded-3xl relative"
+      >
+        <button
+          class="btn btn-primary btn-circle text-base-100 absolute top-8 left-8 pt-1"
+          onclick="window.location.href='/index.html'"
+        >
+          <i class="fi fi-ss-angle-left"></i>
+        </button>
+        <h1 class="text-5xl font-[800] text-primary brightness-75 mb-10">
+          Pomodoro
+        </h1>
+        <div class="flex flex-row w-full">
+          <div
+            id="timer"
+            class="p-4 text-primary w-1/2 flex flex-col items-center justify-center"
+          >
+            <div
+              id="timerdial"
+              class="radial-progress text-6xl font-[700]"
+              style="--value: 100; --size: 16rem; --thickness: 1.6rem"
+              role="progressbar"
+            >
+              <span id="timertime">00:00</span>
+            </div>
+            <div class="flex flex-row mt-8 gap-4 w-1/3">
+              <button
+                class="btn btn-md text-md text-base-100 w-full rounded-full btn-primary"
+                id="timerbutton"
+              >
+                Start
+              </button>
+            </div>
+          </div>
+          <div class="divider divider-horizontal"></div>
+          <div
+            id="settings"
+            class="w-1/2 text-center flex flex-col items-center p-4 gap-6"
+          >
+            <div>
+              <label class="text-primary brightness-[.7] text-lg"
+                >Focus Time Duration</label
+              >
+              <input
+                type="range"
+                min="15"
+                max="35"
+                value="25"
+                class="range w-full range-sm mt-2 range-primary"
+                step="5"
+                id="focusduration"
+              />
+              <div
+                class="flex w-full justify-between px-2 text-xs text-primary brightness-[.7] mt-1"
+              >
+                <span>15</span>
+                <span>20</span>
+                <span>25</span>
+                <span>30</span>
+                <span>35</span>
+              </div>
+            </div>
+            <div>
+              <label class="text-primary brightness-[.7] text-lg"
+                >Short Break Duration</label
+              >
+              <input
+                type="range"
+                min="1"
+                max="9"
+                value="5"
+                class="range w-full range-sm mt-2 range-primary"
+                step="2"
+                id="shortduration"
+              />
+              <div
+                class="flex w-full justify-between px-2 text-xs text-primary brightness-[.7] mt-1"
+              >
+                <span>1</span>
+                <span>3</span>
+                <span>5</span>
+                <span>7</span>
+                <span>9</span>
+              </div>
+            </div>
+            <div>
+              <label class="text-primary brightness-[.7] text-lg"
+                >Long Break Duration</label
+              >
+              <input
+                type="range"
+                min="5"
+                max="25"
+                value="15"
+                class="range w-full range-sm mt-2 range-primary"
+                step="5"
+                id="longduration"
+              />
+              <div
+                class="flex w-full justify-between px-2 text-xs text-primary brightness-[.7] mt-1"
+              >
+                <span>5</span>
+                <span>10</span>
+                <span>15</span>
+                <span>20</span>
+                <span>25</span>
+              </div>
+            </div>
+            <div>
+              <label class="text-primary brightness-[.7] text-lg"
+                >Repetitions</label
+              ><br />
+              <input
+                type="text"
+                id="repcount"
+                class="input input-sm input-bordered border-primary border-2 text-center w-32"
+                placeholder="# of Reps"
+                value="4"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="/styles/theme.js"></script>
+    <script>
+      // Select elements
+      const focusInput = document.getElementById("focusduration");
+      const shortBreakInput = document.getElementById("shortduration");
+      const longBreakInput = document.getElementById("longduration");
+      const repCountInput = document.getElementById("repcount");
+      const timerDial = document.getElementById("timerdial");
+      const timerTime = document.getElementById("timertime");
+      const timerButton = document.getElementById("timerbutton");
+
+      // Check if all elements exist
+      if (
+        !focusInput ||
+        !shortBreakInput ||
+        !longBreakInput ||
+        !repCountInput ||
+        !timerDial ||
+        !timerTime ||
+        !timerButton
+      ) {
+        console.error("One or more elements are missing. Check your HTML IDs.");
+      } else {
+        console.log("All elements found successfully.");
+      }
+
+      // Variables
+      let timerInterval = null;
+      let isPaused = false;
+      let currentRep = 1;
+      let isFocus = true; // Tracks whether it's a focus or break session
+      let remainingTime = 0;
+
+      // Helper function to convert minutes to seconds
+      function minutesToSeconds(minutes) {
+        console.log(`Converting ${minutes} minutes to seconds.`);
+        return minutes * 60;
+      }
+
+      // Helper function to format time as MM:SS
+      function formatTime(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins.toString().padStart(2, "0")}:${secs
+          .toString()
+          .padStart(2, "0")}`;
+      }
+
+      // Update radial progress bar
+      function updateRadialProgress(totalTime, remainingTime) {
+        const progress = (remainingTime / totalTime) * 100; // Calculate percentage remaining
+        console.log(`Updating progress: ${progress}% remaining`);
+        timerDial.style.setProperty("--value", progress); // Update the radial progress value
+      }
+
+      // Disable input fields
+      function disableInputs() {
+        [focusInput, shortBreakInput, longBreakInput, repCountInput].forEach(
+          (input) => {
+            input.setAttribute("disabled", true); // Disable the input field
+            input.classList.add("opacity-50", "cursor-not-allowed"); // Add Tailwind classes for visual feedback
+          }
+        );
+      }
+
+      // Enable input fields (if needed for reset or user actions)
+      function enableInputs() {
+        [focusInput, shortBreakInput, longBreakInput, repCountInput].forEach(
+          (input) => {
+            input.removeAttribute("disabled"); // Enable the input field
+            input.classList.remove("opacity-50", "cursor-not-allowed"); // Remove Tailwind classes for visual feedback
+          }
+        );
+      }
+
+      // Start the timer
+      function startTimer(duration) {
+        console.log(`Starting timer for ${duration} seconds.`);
+        let totalTime = duration; // Save the original duration
+        remainingTime = duration;
+
+        // Initialize radial progress and text
+        updateRadialProgress(totalTime, remainingTime);
+        timerTime.textContent = formatTime(remainingTime);
+
+        timerInterval = setInterval(() => {
+          if (!isPaused) {
+            remainingTime -= 1;
+            console.log(`Remaining time: ${remainingTime}s`);
+            timerTime.textContent = formatTime(remainingTime);
+            updateRadialProgress(totalTime, remainingTime);
+
+            if (remainingTime <= 0) {
+              clearInterval(timerInterval);
+              console.log("Timer completed. Switching to next session.");
+              switchToNextTimer();
+            }
+          }
+        }, 1000);
+      }
+
+      // Switch to the next timer based on the pattern
+      function switchToNextTimer() {
+        console.log(
+          `Switching timer. Current rep: ${currentRep}, IsFocus: ${isFocus}`
+        );
+        if (isFocus) {
+          if (currentRep === parseInt(repCountInput.value)) {
+            // Final rep, switch to long break
+            startTimer(minutesToSeconds(parseInt(longBreakInput.value)));
+          } else {
+            // Switch to short break
+            startTimer(minutesToSeconds(parseInt(shortBreakInput.value)));
+          }
+          isFocus = false;
+        } else {
+          // Return to focus session
+          currentRep++;
+          if (currentRep > parseInt(repCountInput.value)) {
+            resetTimer(); // Reset the timer if all reps are completed
+            return;
+          }
+          startTimer(minutesToSeconds(parseInt(focusInput.value)));
+          isFocus = true;
+        }
+      }
+
+      // Reset the timer
+      function resetTimer() {
+        console.log("Resetting timer.");
+        clearInterval(timerInterval);
+        timerInterval = null;
+        currentRep = 1;
+        isFocus = true;
+        remainingTime = 0;
+        timerButton.textContent = "Start";
+        timerTime.textContent = "00:00";
+        updateRadialProgress(1, 0);
+        enableInputs(); // Enable the input fields after reset
+      }
+
+      // Button click handler
+      timerButton.addEventListener("click", () => {
+        const buttonState = timerButton.textContent.trim(); // Trim extra whitespace
+        console.log(`Timer button clicked. Current state: ${buttonState}`);
+
+        if (buttonState === "Start") {
+          // Start the timer
+          const focusDuration = parseInt(focusInput.value);
+          if (isNaN(focusDuration) || focusDuration <= 0) {
+            alert("Please enter a valid focus duration.");
+            return;
+          }
+          console.log("Starting focus timer.");
+          startTimer(minutesToSeconds(focusDuration));
+          timerButton.textContent = "Pause";
+          disableInputs(); // Disable inputs when the timer starts
+        } else if (buttonState === "Pause") {
+          // Pause the timer
+          isPaused = true;
+          timerButton.textContent = "Resume";
+          console.log("Timer paused.");
+        } else if (buttonState === "Resume") {
+          // Resume the timer
+          isPaused = false;
+          timerButton.textContent = "Pause";
+          console.log("Timer resumed.");
+        }
+      });
+    </script>
+  </body>
+</html>
